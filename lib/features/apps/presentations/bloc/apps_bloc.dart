@@ -98,7 +98,9 @@ class AppsBloc extends Bloc<AppsEvent, AppsState> with AppsBlocMixin {
     on<_PowerOnRecentInput>(_onPowerOnRecentInput);
     on<_PowerOnHomeApp>(_onPowerOnHomeApp);
     on<_ChangeServerQA2>(_onChangeServerQA2);
+    on<_ChangeServerProduction>(_onChangeServerProduction);
     on<_GetPromotionStatus>(_onChangePromotionStatus);
+    on<_CreateAlert>(_onCreateAlert);
   }
 
   Future<void> safeCall(AsyncCallback function,
@@ -552,6 +554,24 @@ class AppsBloc extends Bloc<AppsEvent, AppsState> with AppsBlocMixin {
     });
   }
 
+  FutureOr<void> _onChangeServerProduction(
+      _ChangeServerProduction event, Emitter<AppsState> emit) {
+    safeCall(() async {
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setPublishFlag',
+        param: '{"flag":true}',
+      );
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setAppPublishFlag',
+        param: '{"flag":true}',
+      );
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setServer',
+        param: '{"serverIndex" : "Production"}',
+      );
+    });
+  }
+
   FutureOr<void> _onPowerOnHomeApp(
       _PowerOnHomeApp event, Emitter<AppsState> emit) {
     safeCall(() async {
@@ -575,5 +595,19 @@ class AppsBloc extends Bloc<AppsEvent, AppsState> with AppsBlocMixin {
   FutureOr<void> _onChangePromotionStatus(
       _GetPromotionStatus event, Emitter<AppsState> emit) {
     emit(const _GetPromotionSuccess(true));
+  }
+
+  FutureOr<void> _onCreateAlert(event, Emitter<AppsState> emit) {
+    safeCall(() async {
+      await callLunaApi(
+        'luna://com.webos.notification/createAlert',
+        param:
+            '{"message": "Do you want to use the recommended app list?","modal": false,"title": ""'
+            ',"buttons": [{"position": "left","onclick": "luna://com.webos.applicationManager/removeLaunchPoint",'
+            '"params": {}, "label": "StringSheet.home_426",'
+            '"focus": true},{"position": "right","onclick": "luna://com.webos.applicationManager/launch",'
+            '"params": {},"label": "StringSheet.home_97"}]}',
+      );
+    });
   }
 }

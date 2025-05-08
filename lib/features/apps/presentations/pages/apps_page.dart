@@ -330,6 +330,12 @@ class _AppsPageState extends State<AppsPage>
                     Expanded(
                       child: ListView(
                         children: [
+                          const Section(title: 'Alert', children: [
+                            ActionButton(
+                              event: AppsEvent.promotionOn(),
+                              title: 'Create Alert',
+                            ),
+                          ]),
                           Section(title: 'Ads', children: [
                             ActionButton(
                               event: _enabledPromotion
@@ -368,6 +374,10 @@ class _AppsPageState extends State<AppsPage>
                             ActionButton(
                               event: AppsEvent.changeServerQA2(),
                               title: 'QA2',
+                            ),
+                            ActionButton(
+                              event: AppsEvent.changeServerProduction(),
+                              title: 'Production',
                             ),
                           ]),
                           Section(
