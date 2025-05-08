@@ -332,7 +332,7 @@ class _AppsPageState extends State<AppsPage>
                         children: [
                           const Section(title: 'Alert', children: [
                             ActionButton(
-                              event: AppsEvent.promotionOn(),
+                              event: AppsEvent.createAlert(),
                               title: 'Create Alert',
                             ),
                           ]),
