@@ -1,6 +1,7 @@
 // ignore_for_file: invalid_use_of_visible_for_testing_member
 
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:athena/features/apps/data/models/custom_device.dart';
@@ -51,7 +52,8 @@ enum CountryData {
 
 enum TVMode {
   store,
-  home;
+  home,
+  screensaver;
 
   String get title => name.toTitle();
 }
@@ -93,6 +95,12 @@ class AppsBloc extends Bloc<AppsEvent, AppsState> with AppsBlocMixin {
     on<_PromotionOff>(_offPromotion);
     on<_VoiceControl>(_voiceControl);
     on<_RotateScreen>(_onRotateScreen);
+    on<_PowerOnRecentInput>(_onPowerOnRecentInput);
+    on<_PowerOnHomeApp>(_onPowerOnHomeApp);
+    on<_ChangeServerQA2>(_onChangeServerQA2);
+    on<_ChangeServerProduction>(_onChangeServerProduction);
+    on<_GetPromotionStatus>(_onChangePromotionStatus);
+    on<_CreateAlert>(_onCreateAlert);
   }
 
   Future<void> safeCall(AsyncCallback function,
@@ -371,11 +379,18 @@ class AppsBloc extends Bloc<AppsEvent, AppsState> with AppsBlocMixin {
   Future<void> _onChangeTVMode(
       _ChangeTVMode event, Emitter<AppsState> emit) async {
     await safeCall(() async {
-      await callLunaApi(
-        'luna://com.webos.settingsservice/setSystemSettings',
-        param:
-            '{"settings":{"storeMode":"${event.mode.name}"} ,"category":"option"}',
-      );
+      if (event.mode == TVMode.screensaver) {
+        await callLunaApi(
+          'luna://com.webos.service.nop/notifyExpireTimer',
+          param: '{"type":"[TIMER]ScreenSaver:180", "status":"expired"}',
+        );
+      } else {
+        await callLunaApi(
+          'luna://com.webos.settingsservice/setSystemSettings',
+          param:
+              '{"settings":{"storeMode":"${event.mode.name}"} ,"category":"option"}',
+        );
+      }
     });
   }
 
@@ -517,6 +532,81 @@ class AppsBloc extends Bloc<AppsEvent, AppsState> with AppsBlocMixin {
         'luna://com.webos.settingsservice/setSystemSettings',
         param:
             '{"category":"option" , "settings":{"screenRotation":"${rotationStatus == 'off' ? '90' : 'off'}"}}',
+      );
+    });
+  }
+
+  FutureOr<void> _onChangeServerQA2(
+      _ChangeServerQA2 event, Emitter<AppsState> emit) {
+    safeCall(() async {
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setPublishFlag',
+        param: '{"flag":false}',
+      );
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setAppPublishFlag',
+        param: '{"flag":false}',
+      );
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setServer',
+        param: '{"serverIndex" : "QA2"}',
+      );
+    });
+  }
+
+  FutureOr<void> _onChangeServerProduction(
+      _ChangeServerProduction event, Emitter<AppsState> emit) {
+    safeCall(() async {
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setPublishFlag',
+        param: '{"flag":true}',
+      );
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setAppPublishFlag',
+        param: '{"flag":true}',
+      );
+      await callLunaApi(
+        'luna://com.webos.service.sdx/setServer',
+        param: '{"serverIndex" : "Production"}',
+      );
+    });
+  }
+
+  FutureOr<void> _onPowerOnHomeApp(
+      _PowerOnHomeApp event, Emitter<AppsState> emit) {
+    safeCall(() async {
+      await callLunaApi(
+        'luna://com.webos.settingsservice/setSystemSettings',
+        param: '{"category":"general", "settings":{"homeAutoLaunch":"on"}}',
+      );
+    });
+  }
+
+  FutureOr<void> _onPowerOnRecentInput(
+      _PowerOnRecentInput event, Emitter<AppsState> emit) {
+    safeCall(() async {
+      await callLunaApi(
+        'luna://com.webos.settingsservice/setSystemSettings',
+        param: '{"category":"general", "settings":{"homeAutoLaunch":"off"}}',
+      );
+    });
+  }
+
+  FutureOr<void> _onChangePromotionStatus(
+      _GetPromotionStatus event, Emitter<AppsState> emit) {
+    emit(const _GetPromotionSuccess(true));
+  }
+
+  FutureOr<void> _onCreateAlert(event, Emitter<AppsState> emit) {
+    safeCall(() async {
+      await callLunaApi(
+        'luna://com.webos.notification/createAlert',
+        param:
+            '{"message": "Do you want to use the recommended app list?","modal": false,"title": ""'
+            ',"buttons": [{"position": "left","onclick": "luna://com.webos.applicationManager/removeLaunchPoint",'
+            '"params": {}, "label": "StringSheet.home_426",'
+            '"focus": true},{"position": "right","onclick": "luna://com.webos.applicationManager/launch",'
+            '"params": {},"label": "StringSheet.home_97"}]}',
       );
     });
   }

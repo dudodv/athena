@@ -48,10 +48,16 @@ class AppsEvent with _$AppsEvent {
       _SwitchAudioGuidance;
   const factory AppsEvent.changeCountry(CountryData country) = _ChangeCountry;
   const factory AppsEvent.promotionOn() = _PromotionOn;
+  const factory AppsEvent.createAlert() = _CreateAlert;
   const factory AppsEvent.promotionOff() = _PromotionOff;
   const factory AppsEvent.recommendOn() = _RecommendOn;
   const factory AppsEvent.recommendOff() = _RecommendOff;
   const factory AppsEvent.voiceControl(String text, String language) =
       _VoiceControl;
   const factory AppsEvent.rotateScreen() = _RotateScreen;
+  const factory AppsEvent.powerOnRecentInput() = _PowerOnRecentInput;
+  const factory AppsEvent.powerOnHomeApp() = _PowerOnHomeApp;
+  const factory AppsEvent.changeServerQA2() = _ChangeServerQA2;
+  const factory AppsEvent.changeServerProduction() = _ChangeServerProduction;
+  const factory AppsEvent.getPromotionStatus() = _GetPromotionStatus;
 }
